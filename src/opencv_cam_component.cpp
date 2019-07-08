@@ -8,7 +8,6 @@
 namespace opencv_cam
 {
 
-  // TODO use camera_info_manager
   bool get_camera_info(const std::string &camera_info_path, sensor_msgs::msg::CameraInfo &info)
   {
     // File format: 2 ints and 9 floats, separated by whitespace:
@@ -109,7 +108,6 @@ namespace opencv_cam
 
     if (!get_camera_info(cxt_.camera_info_path_, camera_info_msg_)) {
       RCLCPP_ERROR(get_logger(), "cannot get camera info");
-      return;
     }
 
     camera_info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("camera_info", 1);
@@ -120,7 +118,6 @@ namespace opencv_cam
     // Run loop on it's own thread
     thread_ = std::thread(std::bind(&OpencvCamNode::loop, this));
 
-    // TODO get height, width, etc.
     RCLCPP_INFO(get_logger(), "publishing images and info");
   }
 
