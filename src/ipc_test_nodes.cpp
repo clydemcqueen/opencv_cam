@@ -23,9 +23,13 @@ public:
         count++;
 
         if (!eof && msg->width == 0) {
-          std::cout << "count was " <<  count << std::endl;
+          std::cout << "count was " << count << std::endl;
           eof = true;
         }
+
+#if 1
+        std::cout << "Recv address: " << reinterpret_cast<std::uintptr_t>(msg.get()) << std::endl;
+#endif
       });
   }
 };

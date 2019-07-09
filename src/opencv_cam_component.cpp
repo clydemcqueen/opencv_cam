@@ -116,7 +116,6 @@ namespace opencv_cam
     header_.frame_id = cxt_.camera_frame_;
 
     // Run loop on it's own thread
-    // TODO need weak ptrs?
     thread_ = std::thread(std::bind(&OpencvCamNode::loop, this));
 
     RCLCPP_INFO(get_logger(), "publishing images and info");
@@ -169,9 +168,18 @@ namespace opencv_cam
       image_msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(frame.step);
       image_msg->data.assign(frame.datastart, frame.dataend);
 
+#if 1
+      std::cout << "Send address: " << reinterpret_cast<std::uintptr_t>(image_msg.get()) << std::endl;
+#endif
+
       // Publish
       image_pub_->publish(std::move(image_msg));
       camera_info_pub_->publish(camera_info_msg_);
+
+#if 1
+      using namespace std::chrono_literals;
+      std::this_thread::sleep_for(1s);
+#endif
     }
   }
 
