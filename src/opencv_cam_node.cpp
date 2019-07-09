@@ -13,7 +13,7 @@ int main(int argc, char **argv)
 
   // Create and add camera node
   rclcpp::NodeOptions options{};
-  options.use_intra_process_comms(false); // TODO
+  options.use_intra_process_comms(true);
   auto node = std::make_shared<opencv_cam::OpencvCamNode>(options);
   executor.add_node(node);
 

@@ -1,6 +1,6 @@
 # opencv_cam
 
-[ROS2](https://index.ros.org/doc/ros2/) camera driver based on [OpenCV](https://opencv.org/).
+A simple [ROS2](https://index.ros.org/doc/ros2/) camera driver based on [OpenCV](https://opencv.org/).
 
 Tested with Ubuntu Bionic, OpenCV 3.2 and ROS2 Dashing.
 
@@ -18,7 +18,7 @@ colcon build
 
 ## Usage
 
-Default is to publish images from /dev/video0:
+Default is to publish images from `/dev/video0`:
 ~~~
 ros2 run opencv_cam opencv_cam_node
 ~~~

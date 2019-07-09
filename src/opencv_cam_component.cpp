@@ -82,7 +82,7 @@ namespace opencv_cam
     }
   }
 
-  OpencvCamNode::OpencvCamNode(rclcpp::NodeOptions &options) :
+  OpencvCamNode::OpencvCamNode(const rclcpp::NodeOptions &options) :
     Node("opencv_cam", options)
   {
     // Get parameters
@@ -116,6 +116,7 @@ namespace opencv_cam
     header_.frame_id = cxt_.camera_frame_;
 
     // Run loop on it's own thread
+    // TODO need weak ptrs?
     thread_ = std::thread(std::bind(&OpencvCamNode::loop, this));
 
     RCLCPP_INFO(get_logger(), "publishing images and info");
@@ -155,26 +156,27 @@ namespace opencv_cam
       // Synchronize messages
       auto stamp = now();
 
-      // Pass unique_ptr to publish() calls, these will not be copied
-      // TODO
-      //sensor_msgs::msg::CameraInfo::UniquePtr camera_info_msg(new sensor_msgs::msg::CameraInfo(camera_info_msg_));
-      //sensor_msgs::msg::Image::UniquePtr image_msg(new sensor_msgs::msg::Image());
+      // Avoid copying image message if possible
+      sensor_msgs::msg::Image::UniquePtr image_msg(new sensor_msgs::msg::Image());
 
       // Convert OpenCV Mat to ROS Image
-      sensor_msgs::msg::Image image_msg;
-      image_msg.header.stamp = stamp;
-      image_msg.header.frame_id = "camera_frame";
-      image_msg.height = frame.rows;
-      image_msg.width = frame.cols;
-      image_msg.encoding = mat_type2encoding(frame.type());
-      image_msg.is_bigendian = false;
-      image_msg.step = static_cast<sensor_msgs::msg::Image::_step_type>(frame.step);
-      image_msg.data.assign(frame.datastart, frame.dataend);
+      image_msg->header.stamp = stamp;
+      image_msg->header.frame_id = "camera_frame";
+      image_msg->height = frame.rows;
+      image_msg->width = frame.cols;
+      image_msg->encoding = mat_type2encoding(frame.type());
+      image_msg->is_bigendian = false;
+      image_msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(frame.step);
+      image_msg->data.assign(frame.datastart, frame.dataend);
 
       // Publish
-      image_pub_->publish(image_msg);
+      image_pub_->publish(std::move(image_msg));
       camera_info_pub_->publish(camera_info_msg_);
     }
   }
 
 } // namespace opencv_cam
+
+#include "rclcpp_components/register_node_macro.hpp"
+
+RCLCPP_COMPONENTS_REGISTER_NODE(opencv_cam::OpencvCamNode)
