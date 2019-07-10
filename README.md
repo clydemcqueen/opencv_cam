@@ -31,10 +31,10 @@ ros2 run opencv_cam opencv_cam_node /image_raw:=/my_camera/image_raw __params:=o
 ~~~
 /opencv_cam:
   ros__parameters:
-    str_api: True
+    file: True
     filename: 'my_camera.MOV'
     camera_info_path: 'my_camera_info.txt'
-    camera_frame: 'my_camera'
+    camera_frame_id: 'my_camera'
 ~~~
 ... and my_camera_info.txt is:
 ~~~
@@ -48,9 +48,10 @@ ros2 run opencv_cam opencv_cam_node /image_raw:=/my_camera/image_raw __params:=o
 
 | Parameter | Type | Default | Notes |
 |---|---|---|---|
-| str_api | bool | False | True: call VideoCapture(filename, api), False: call VideoCapture(api) |
-| filename | string | "" | Movie filename, ignored if str_api is False |
-| api | int | 0 | API, see cv::VideoCaptureAPIs for details |
+| file | bool | False | Read from file vs. read from device |
+| filename | string | "" | Filename, ignored if file is False |
+| fps | int | 0 | Target framerate. Specify 0 to publish at the recorded frame rate. Ignored if file is False |
+| index | int | 0 | Device index, 0 for /dev/video0. Ignored if file is True |
 | camera_info_path | string | "" | Camera info path |
 | camera_frame | string | "camera_frame" | Camera frame id |
 

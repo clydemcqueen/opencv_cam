@@ -26,7 +26,7 @@ def generate_launch_description():
                 node_plugin='opencv_cam::OpencvCamNode',
                 node_name='image_publisher',
                 parameters=[{
-                    'str_api': True,
+                    'file': True,
                     'filename': movie,
                     'camera_info_path': camera_info_path,
                 }]

@@ -29,7 +29,7 @@ namespace opencv_cam
 
     // See https://github.com/ros2/common_interfaces/blob/master/sensor_msgs/msg/CameraInfo.msg
 
-    info.header.frame_id = "camera_frame";
+    info.header.frame_id = "camera_frame"; // TODO pull from cxt_
     info.height = height;
     info.width = width;
     info.distortion_model = "plumb_bob";
@@ -95,15 +95,37 @@ namespace opencv_cam
 #define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_PARAMETER_CHANGED(cxt_, n, t)
     CXT_MACRO_REGISTER_PARAMETERS_CHANGED((*this), OPENCV_CAM_ALL_PARAMS, validate_parameters)
 
-    if (cxt_.str_api_) {
-      camera_ = std::make_shared<cv::VideoCapture>(cxt_.filename_, cxt_.api_);
+    std::string capture_name = cxt_.file_ ? "file" : "device";
+
+    // Open file or device
+    if (cxt_.file_) {
+      capture_ = std::make_shared<cv::VideoCapture>(cxt_.filename_, cxt_.index_);
     } else {
-      camera_ = std::make_shared<cv::VideoCapture>(cxt_.api_);
+      capture_ = std::make_shared<cv::VideoCapture>(cxt_.index_);
     }
 
-    if (!camera_->isOpened()) {
-      RCLCPP_ERROR(get_logger(), "cannot open camera");
+    if (!capture_->isOpened()) {
+      RCLCPP_ERROR(get_logger(), "cannot open %s", capture_name.c_str());
       return;
+    }
+
+    double width = capture_->get(cv::CAP_PROP_FRAME_WIDTH);
+    double height = capture_->get(cv::CAP_PROP_FRAME_HEIGHT);
+    RCLCPP_INFO(get_logger(), "%s open, width = %g, height = %g", capture_name.c_str(), width, height);
+
+    if (cxt_.file_) {
+      if (cxt_.fps_ > 0) {
+        // Publish at the specified rate
+        fps_ = cxt_.fps_;
+      } else {
+        // Publish at the recorded rate
+        fps_ = capture_->get(cv::CAP_PROP_FPS);
+        RCLCPP_INFO(get_logger(), "publish at %d fps", fps_);
+      }
+      next_stamp_ = now();
+    } else {
+      // Publish at the device rate
+      fps_ = 0;
     }
 
     if (!get_camera_info(cxt_.camera_info_path_, camera_info_msg_)) {
@@ -113,12 +135,10 @@ namespace opencv_cam
     camera_info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("camera_info", 1);
     image_pub_ = create_publisher<sensor_msgs::msg::Image>("image_raw", 1);
 
-    header_.frame_id = cxt_.camera_frame_;
-
     // Run loop on it's own thread
     thread_ = std::thread(std::bind(&OpencvCamNode::loop, this));
 
-    RCLCPP_INFO(get_logger(), "publishing images and info");
+    RCLCPP_INFO(get_logger(), "start publishing");
   }
 
   OpencvCamNode::~OpencvCamNode()
@@ -142,22 +162,12 @@ namespace opencv_cam
     cv::Mat frame;
 
     while (rclcpp::ok() && !canceled_.load()) {
-      // Block until a frame is available
-      camera_->read(frame);
-
-      if (frame.rows == 0) {
+      // Read a frame, if this is a device block until a frame is available
+      if (!capture_->read(frame)) {
         RCLCPP_INFO(get_logger(), "EOF, stop publishing");
         break;
       }
 
-      // Skip some frames while debugging to slow down the pipeline
-      static int skip_count = 0;
-      if (++skip_count < cxt_.skip_frames_) {
-        continue;
-      }
-      skip_count = 0;
-
-      // Synchronize messages
       auto stamp = now();
 
       // Avoid copying image message if possible
@@ -165,7 +175,7 @@ namespace opencv_cam
 
       // Convert OpenCV Mat to ROS Image
       image_msg->header.stamp = stamp;
-      image_msg->header.frame_id = "camera_frame";
+      image_msg->header.frame_id = cxt_.camera_frame_id_;
       image_msg->height = frame.rows;
       image_msg->width = frame.cols;
       image_msg->encoding = mat_type2encoding(frame.type());
@@ -183,11 +193,14 @@ namespace opencv_cam
       image_pub_->publish(std::move(image_msg));
       camera_info_pub_->publish(camera_info_msg_);
 
-#if 0
-      // TODO better method to slow down the pipeline
-      using namespace std::chrono_literals;
-      std::this_thread::sleep_for(1s);
-#endif
+      // Sleep if required
+      if (fps_ > 0) {
+        next_stamp_ = next_stamp_ + rclcpp::Duration{1000000000L / fps_};
+        auto wait = next_stamp_ - stamp;
+        if (wait.nanoseconds() > 0) {
+          std::this_thread::sleep_for(static_cast<std::chrono::nanoseconds>(wait.nanoseconds()));
+        }
+      }
     }
   }
 

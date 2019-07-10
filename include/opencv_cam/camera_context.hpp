@@ -10,12 +10,12 @@ namespace opencv_cam
 {
 
 #define OPENCV_CAM_ALL_PARAMS \
-  CXT_MACRO_MEMBER(str_api, bool, false)                          /* True: use VideoCapture(filename, api) API */ \
-  CXT_MACRO_MEMBER(filename, std::string, "")                     /* Filename, ignored if str_api is false */ \
-  CXT_MACRO_MEMBER(api, int, 0)                                   /* Index, see cv::VideoCaptureAPIs */ \
-  CXT_MACRO_MEMBER(skip_frames, int, 0)                           /* Target fps = 30 / (skip + 1) */ \
+  CXT_MACRO_MEMBER(file, bool, false)                             /* Read from file vs. read from device */ \
+  CXT_MACRO_MEMBER(filename, std::string, "")                     /* Filename, ignored if playback is false */ \
+  CXT_MACRO_MEMBER(fps, int, 0)                                   /* Playback fps, ignored if playback is false*/ \
+  CXT_MACRO_MEMBER(index, int, 0)                                 /* Device index, see cv::VideoCaptureAPIs */ \
   CXT_MACRO_MEMBER(camera_info_path, std::string, "")             /* Camera info path */ \
-  CXT_MACRO_MEMBER(camera_frame, std::string, "camera_frame")     /* Camera frame */ \
+  CXT_MACRO_MEMBER(camera_frame_id, std::string, "camera_frame")  /* Camera frame id */ \
 /* End of list */
 
 #undef CXT_MACRO_MEMBER

@@ -18,9 +18,11 @@ namespace opencv_cam
     std::thread thread_;
     std::atomic<bool> canceled_;
 
-    std::shared_ptr<cv::VideoCapture> camera_;
+    std::shared_ptr<cv::VideoCapture> capture_;
     sensor_msgs::msg::CameraInfo camera_info_msg_;
-    std_msgs::msg::Header header_{};
+
+    int fps_;
+    rclcpp::Time next_stamp_;
 
     rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_;
     rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_pub_;
