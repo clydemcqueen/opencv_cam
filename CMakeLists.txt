@@ -56,6 +56,10 @@ add_library(
   opencv_cam_component SHARED
   src/opencv_cam_component.cpp
 )
+target_compile_definitions(
+  opencv_cam_component
+  PRIVATE "COMPOSITION_BUILDING_DLL"
+)
 ament_target_dependencies(
   opencv_cam_component
   class_loader
@@ -64,19 +68,39 @@ ament_target_dependencies(
   sensor_msgs
 )
 rclcpp_components_register_nodes(opencv_cam_component "opencv_cam::OpencvCamNode")
-set(node_plugins "${node_plugins}opencv_cam::OpencvCamNode;$<TARGET_FILE:OpencvCamNode>\n")
-
-# Export incantations:
-# Call ament_export_interfaces()
-# Reference this in the install() with an EXPORT line
-# Source install/local_setup.bash after the build
-ament_export_interfaces(
-  opencv_cam_component
-  HAS_LIBRARY_TARGET
-)
+set(node_plugins "${node_plugins}opencv_cam::OpencvCamNode;$<TARGET_FILE:opencv_cam_component>\n")
 
 #=============
-# OpenCV camera node
+# Test subscriber component
+#=============
+
+add_library(
+  subscriber_component SHARED
+  src/subscriber_component.cpp
+)
+target_compile_definitions(
+  subscriber_component
+  PRIVATE "COMPOSITION_BUILDING_DLL"
+)
+ament_target_dependencies(
+  subscriber_component
+  class_loader
+  rclcpp
+  sensor_msgs
+)
+rclcpp_components_register_nodes(subscriber_component "opencv_cam::ImageSubscriberNode")
+set(node_plugins "${node_plugins}opencv_cam::ImageSubscriberNode;$<TARGET_FILE:subscriber_component>\n")
+
+#=============
+# Export incantations, see https://github.com/ros2/demos/blob/master/composition/CMakeLists.txt
+#=============
+
+if (NOT WIN32)
+  ament_environment_hooks("${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}")
+endif ()
+
+#=============
+# OpenCV camera node, IPC=true
 #=============
 
 add_executable(
@@ -93,19 +117,20 @@ ament_target_dependencies(
 )
 
 #=============
-# IPC test nodes
+# Manual composition of camera and subscriber components, IPC=true
 #=============
 
 add_executable(
-  ipc_test_nodes
-  src/ipc_test_nodes.cpp
+  manual_composition
+  src/manual_composition.cpp
 )
 target_link_libraries(
-  ipc_test_nodes
+  manual_composition
   opencv_cam_component
+  subscriber_component
 )
 ament_target_dependencies(
-  ipc_test_nodes
+  manual_composition
   rclcpp
 )
 
@@ -113,12 +138,24 @@ ament_target_dependencies(
 # Install
 #=============
 
-## Install C++ targets
+# Install components
 install(
-  TARGETS opencv_cam_node ipc_test_nodes opencv_cam_component
-  EXPORT opencv_cam_component
-  LIBRARY DESTINATION lib                 # Shared libraries must be in lib
-  RUNTIME DESTINATION lib/${PROJECT_NAME} # Node executables must be in lib/<pkg> for ros2
+  TARGETS opencv_cam_component subscriber_component
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+# Install executables
+install(
+  TARGETS opencv_cam_node manual_composition
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+# Install various directories
+install(
+  DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
 )
 
 ament_package()

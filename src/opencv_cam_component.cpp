@@ -173,7 +173,11 @@ namespace opencv_cam
       image_msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(frame.step);
       image_msg->data.assign(frame.datastart, frame.dataend);
 
-      // std::cout << "Send address: " << reinterpret_cast<std::uintptr_t>(image_msg.get()) << std::endl;
+#undef SHOW_ADDRESS
+#ifdef SHOW_ADDRESS
+      static int count = 0;
+      RCLCPP_INFO(get_logger(), "%d, %p", count++, reinterpret_cast<std::uintptr_t>(image_msg.get()));
+#endif
 
       // Publish
       image_pub_->publish(std::move(image_msg));
