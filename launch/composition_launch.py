@@ -13,9 +13,7 @@ from launch_ros.descriptions import ComposableNode
 
 def generate_launch_description():
     movie = 'test.mov'
-    movie = '/home/clyde/Desktop/4K_camera/wet/20180101_133138.MOV'
     camera_info_path = 'info.txt'
-    camera_info_path = '/home/clyde/ros2/orca_ws/install/orca_driver/share/orca_driver/cfg/brusb_info.txt'
 
     container = ComposableNodeContainer(
         node_name='my_container',
