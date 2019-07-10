@@ -145,6 +145,11 @@ namespace opencv_cam
       // Block until a frame is available
       camera_->read(frame);
 
+      if (frame.rows == 0) {
+        RCLCPP_INFO(get_logger(), "EOF, stop publishing");
+        break;
+      }
+
       // Skip some frames while debugging to slow down the pipeline
       static int skip_count = 0;
       if (++skip_count < cxt_.skip_frames_) {
@@ -168,15 +173,14 @@ namespace opencv_cam
       image_msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(frame.step);
       image_msg->data.assign(frame.datastart, frame.dataend);
 
-#if 1
-      std::cout << "Send address: " << reinterpret_cast<std::uintptr_t>(image_msg.get()) << std::endl;
-#endif
+      // std::cout << "Send address: " << reinterpret_cast<std::uintptr_t>(image_msg.get()) << std::endl;
 
       // Publish
       image_pub_->publish(std::move(image_msg));
       camera_info_pub_->publish(camera_info_msg_);
 
-#if 1
+#if 0
+      // TODO better method to slow down the pipeline
       using namespace std::chrono_literals;
       std::this_thread::sleep_for(1s);
 #endif

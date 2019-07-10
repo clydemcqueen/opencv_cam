@@ -27,9 +27,7 @@ public:
           eof = true;
         }
 
-#if 1
-        std::cout << "Recv address: " << reinterpret_cast<std::uintptr_t>(msg.get()) << std::endl;
-#endif
+        // std::cout << "Recv address: " << reinterpret_cast<std::uintptr_t>(msg.get()) << std::endl;
       });
   }
 };

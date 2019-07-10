@@ -13,9 +13,7 @@ endif ()
 # Emulate colcon by providing paths to other projects in the workspace
 if ($ENV{CLION_IDE})
   message("Running inside CLion")
-  find_package(fastrtps_cmake_module REQUIRED)
-  set(FastRTPS_INCLUDE_DIR "/opt/ros/dashing/include")
-  set(FastRTPS_LIBRARY_RELEASE "/opt/ros/dashing/lib/libfastrtps.so")
+  set(CMAKE_LIBRARY_PATH "/opt/ros/dashing/lib") # Fixes CMake error and link error
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRUN_INSIDE_CLION")
   set(ros2_shared_DIR "${PROJECT_SOURCE_DIR}/../../../install/ros2_shared/share/ros2_shared/cmake")
 endif ()
@@ -27,6 +25,16 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(ros2_shared REQUIRED)
 find_package(sensor_msgs REQUIRED)
+
+# Debugging: set _dump_all_variables to true
+set(_dump_all_variables false)
+if (_dump_all_variables)
+  get_cmake_property(_variable_names VARIABLES)
+  list(SORT _variable_names)
+  foreach (_variable_name ${_variable_names})
+    message(STATUS "${_variable_name}=${${_variable_name}}")
+  endforeach ()
+endif ()
 
 include_directories(
   include
