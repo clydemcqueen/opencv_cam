@@ -27,7 +27,7 @@ namespace opencv_cam
 
   public:
 
-    explicit OpencvCamNode(rclcpp::NodeOptions &options);
+    explicit OpencvCamNode(const rclcpp::NodeOptions &options);
 
     ~OpencvCamNode();
 
