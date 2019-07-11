@@ -19,6 +19,7 @@ if ($ENV{CLION_IDE})
 endif ()
 
 find_package(ament_cmake REQUIRED)
+find_package(camera_calibration_parsers REQUIRED)
 find_package(class_loader REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -38,6 +39,7 @@ endif ()
 
 include_directories(
   include
+  ${camera_calibration_parsers_INCLUDE_DIRS}
   ${cv_bridge_INCLUDE_DIRS}
   ${rclcpp_INCLUDE_DIRS}
   ${rclcpp_components_INCLUDE_DIRS}
@@ -62,6 +64,7 @@ target_compile_definitions(
 )
 ament_target_dependencies(
   opencv_cam_component
+  camera_calibration_parsers
   class_loader
   cv_bridge
   rclcpp

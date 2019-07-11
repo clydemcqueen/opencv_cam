@@ -3,68 +3,11 @@
 #include <iostream>
 #include <fstream>
 
+#include "camera_calibration_parsers/parse.h"
 #include "cv_bridge/cv_bridge.h"
 
 namespace opencv_cam
 {
-
-  bool get_camera_info(const std::string &camera_info_path, sensor_msgs::msg::CameraInfo &info)
-  {
-    // File format: 2 ints and 9 floats, separated by whitespace:
-    // height width fx fy cx cy k1 k2 t1 t2 k3
-
-    std::ifstream file;
-    file.open(camera_info_path);
-    if (!file) {
-      return false;
-    }
-
-    uint32_t height, width;
-    double fx, fy, cx, cy, k1, k2, t1, t2, k3;
-    file >> height >> width;
-    file >> fx >> fy;
-    file >> cx >> cy;
-    file >> k1 >> k2 >> t1 >> t2 >> k3;
-    file.close();
-
-    // See https://github.com/ros2/common_interfaces/blob/master/sensor_msgs/msg/CameraInfo.msg
-
-    info.header.frame_id = "camera_frame"; // TODO pull from cxt_
-    info.height = height;
-    info.width = width;
-    info.distortion_model = "plumb_bob";
-
-    info.d.push_back(k1);
-    info.d.push_back(k2);
-    info.d.push_back(t1);
-    info.d.push_back(t2);
-    info.d.push_back(k3);
-
-    info.k[0] = fx;
-    info.k[1] = 0;
-    info.k[2] = cx;
-    info.k[3] = 0;
-    info.k[4] = fy;
-    info.k[5] = cy;
-    info.k[6] = 0;
-    info.k[7] = 0;
-    info.k[8] = 1;
-
-    info.p[0] = fx;
-    info.p[1] = 0;
-    info.p[2] = cx;
-    info.p[3] = 0;
-    info.p[4] = 0;
-    info.p[5] = fy;
-    info.p[6] = cy;
-    info.p[7] = 0;
-    info.p[8] = 0;
-    info.p[9] = 0;
-    info.p[10] = 1;
-    info.p[11] = 0;
-
-    return true;
-  }
 
   std::string mat_type2encoding(int mat_type)
   {
@@ -128,12 +71,17 @@ namespace opencv_cam
       fps_ = 0;
     }
 
-    if (!get_camera_info(cxt_.camera_info_path_, camera_info_msg_)) {
+    std::string camera_name;
+    if (camera_calibration_parsers::readCalibration(cxt_.camera_info_path_, camera_name, camera_info_msg_)) {
+      RCLCPP_INFO(get_logger(), "got camera info for '%s'", camera_name.c_str());
+    } else {
       RCLCPP_ERROR(get_logger(), "cannot get camera info");
     }
 
-    camera_info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("camera_info", 1);
-    image_pub_ = create_publisher<sensor_msgs::msg::Image>("image_raw", 1);
+    camera_info_msg_.header.frame_id = cxt_.camera_frame_id_;
+
+    camera_info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("camera_info", 10);
+    image_pub_ = create_publisher<sensor_msgs::msg::Image>("image_raw", 10);
 
     // Run loop on it's own thread
     thread_ = std::thread(std::bind(&OpencvCamNode::loop, this));
@@ -169,6 +117,7 @@ namespace opencv_cam
       }
 
       auto stamp = now();
+      camera_info_msg_.header.stamp = stamp;
 
       // Avoid copying image message if possible
       sensor_msgs::msg::Image::UniquePtr image_msg(new sensor_msgs::msg::Image());
