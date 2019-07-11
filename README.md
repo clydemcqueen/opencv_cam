@@ -33,15 +33,8 @@ ros2 run opencv_cam opencv_cam_node /image_raw:=/my_camera/image_raw __params:=o
   ros__parameters:
     file: True
     filename: 'my_camera.MOV'
-    camera_info_path: 'my_camera_info.txt'
+    camera_info_path: 'my_camera_info.ini'
     camera_frame_id: 'my_camera'
-~~~
-... and my_camera_info.txt is:
-~~~
-480 640
-464.015707 462.756973
-353.670391 247.734851
-0.007742 -0.008235 -0.000835 0.002624 0.000000
 ~~~
 
 ## Parameters
@@ -55,9 +48,7 @@ ros2 run opencv_cam opencv_cam_node /image_raw:=/my_camera/image_raw __params:=o
 | camera_info_path | string | "" | Camera info path |
 | camera_frame | string | "camera_frame" | Camera frame id |
 
-## Camera info file format
+## Camera info file formats
 
-2 ints and 9 floats, separated by whitespace:
-~~~
-height width fx fy cx cy k1 k2 t1 t2 k3
-~~~
+Uses the [ROS standard camera calibration formats](http://wiki.ros.org/camera_calibration_parsers?distro=melodic).
+Files must end in `.ini` or `.yaml`.
