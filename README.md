@@ -2,7 +2,11 @@
 
 A simple [ROS2](https://index.ros.org/doc/ros2/) camera driver based on [OpenCV](https://opencv.org/).
 
-Tested with Ubuntu Bionic, OpenCV 3.2 and ROS2 Dashing.
+Supports [ROS2 intra-process comms](https://index.ros.org//doc/ros2/Tutorials/Intra-Process-Communication/).
+
+Requires Ubuntu Bionic, OpenCV 3.2, 
+[ROS2 Dashing](https://index.ros.org/doc/ros2/Installation/Dashing/) and 
+`ros-dashing-camera-calibration-parsers`.
 
 ## Install and build
 
