@@ -1,4 +1,4 @@
-#include "opencv_cam/subscriber_component.hpp"
+#include "opencv_cam/subscriber_node.hpp"
 
 namespace opencv_cam
 {

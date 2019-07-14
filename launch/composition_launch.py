@@ -13,7 +13,7 @@ from launch_ros.descriptions import ComposableNode
 
 def generate_launch_description():
     movie = 'test.mov'
-    camera_info_path = 'info.txt'
+    camera_info_path = 'info.ini'
 
     container = ComposableNodeContainer(
         node_name='my_container',
