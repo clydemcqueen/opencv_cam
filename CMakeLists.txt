@@ -12,14 +12,20 @@ endif ()
 
 # Emulate colcon by providing paths to other projects in the workspace
 if ($ENV{CLION_IDE})
-  message("Running inside CLion")
+  message(STATUS "Running inside CLion")
   set(ros2_shared_DIR "${PROJECT_SOURCE_DIR}/../../../install/ros2_shared/share/ros2_shared/cmake")
 endif ()
+
+# Try for OpenCV 4.X, but settle for whatever is installed
+find_package(OpenCV 4 QUIET)
+if (NOT OpenCV_FOUND)
+  find_package(OpenCV REQUIRED)
+endif ()
+message(STATUS "Found OpenCV version ${OpenCV_VERSION}")
 
 find_package(ament_cmake REQUIRED)
 find_package(camera_calibration_parsers REQUIRED)
 find_package(class_loader REQUIRED)
-find_package(OpenCV REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(ros2_shared REQUIRED)

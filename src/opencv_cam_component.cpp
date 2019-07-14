@@ -37,6 +37,8 @@ namespace opencv_cam
 #define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_PARAMETER_CHANGED(cxt_, n, t)
     CXT_MACRO_REGISTER_PARAMETERS_CHANGED((*this), OPENCV_CAM_ALL_PARAMS, validate_parameters)
 
+    RCLCPP_INFO(get_logger(), "OpenCV version %d", CV_VERSION_MAJOR);
+
     std::string capture_name = cxt_.file_ ? "file" : "device";
 
     // Open file or device
