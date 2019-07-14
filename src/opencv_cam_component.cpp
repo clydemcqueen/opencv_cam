@@ -4,7 +4,6 @@
 #include <fstream>
 
 #include "camera_calibration_parsers/parse.h"
-#include "cv_bridge/cv_bridge.h"
 
 namespace opencv_cam
 {
