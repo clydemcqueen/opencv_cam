@@ -3,7 +3,7 @@
 namespace opencv_cam
 {
 
-  ImageSubscriberNode::ImageSubscriberNode(const rclcpp::NodeOptions& options) :
+  ImageSubscriberNode::ImageSubscriberNode(const rclcpp::NodeOptions &options) :
     Node("image_subscriber", options)
   {
     sub_ = this->create_subscription<sensor_msgs::msg::Image>(
@@ -22,8 +22,8 @@ namespace opencv_cam
         static int count = 0;
         RCLCPP_INFO(get_logger(), "%d, %p", count++, reinterpret_cast<std::uintptr_t>(msg.get()));
 #else
-        (void)this;
-        (void)msg;
+        (void) this;
+        (void) msg;
 #endif
       });
 
