@@ -12,87 +12,77 @@ endif ()
 
 # Emulate colcon by providing paths to other projects in the workspace
 if ($ENV{CLION_IDE})
-  message("Running inside CLion")
-  set(CMAKE_LIBRARY_PATH "/opt/ros/dashing/lib") # Fixes CMake error and link error
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRUN_INSIDE_CLION")
+  message(STATUS "Running inside CLion")
   set(ros2_shared_DIR "${PROJECT_SOURCE_DIR}/../../../install/ros2_shared/share/ros2_shared/cmake")
 endif ()
+
+# Try for OpenCV 4.X, but settle for whatever is installed
+find_package(OpenCV 4 QUIET)
+if (NOT OpenCV_FOUND)
+  find_package(OpenCV REQUIRED)
+endif ()
+message(STATUS "Found OpenCV version ${OpenCV_VERSION}")
 
 find_package(ament_cmake REQUIRED)
 find_package(camera_calibration_parsers REQUIRED)
 find_package(class_loader REQUIRED)
-find_package(cv_bridge REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(ros2_shared REQUIRED)
 find_package(sensor_msgs REQUIRED)
 
-# Debugging: set _dump_all_variables to true
-set(_dump_all_variables false)
-if (_dump_all_variables)
-  get_cmake_property(_variable_names VARIABLES)
-  list(SORT _variable_names)
-  foreach (_variable_name ${_variable_names})
-    message(STATUS "${_variable_name}=${${_variable_name}}")
-  endforeach ()
-endif ()
-
+# Package includes not needed for CMake >= 2.8.11
 include_directories(
   include
-  ${camera_calibration_parsers_INCLUDE_DIRS}
-  ${cv_bridge_INCLUDE_DIRS}
-  ${rclcpp_INCLUDE_DIRS}
-  ${rclcpp_components_INCLUDE_DIRS}
   ${ros2_shared_INCLUDE_DIRS}
-  ${sensor_msgs_INCLUDE_DIRS}
 )
 
 # Create ament index resource which references the libraries in the binary dir
 set(node_plugins "")
 
 #=============
-# OpenCV camera component
+# OpenCV camera node
 #=============
 
 add_library(
-  opencv_cam_component SHARED
-  src/opencv_cam_component.cpp
+  opencv_cam_node SHARED
+  src/opencv_cam_node.cpp
 )
 target_compile_definitions(
-  opencv_cam_component
+  opencv_cam_node
   PRIVATE "COMPOSITION_BUILDING_DLL"
 )
 ament_target_dependencies(
-  opencv_cam_component
+  opencv_cam_node
   camera_calibration_parsers
   class_loader
-  cv_bridge
+  OpenCV
   rclcpp
   sensor_msgs
 )
-rclcpp_components_register_nodes(opencv_cam_component "opencv_cam::OpencvCamNode")
-set(node_plugins "${node_plugins}opencv_cam::OpencvCamNode;$<TARGET_FILE:opencv_cam_component>\n")
+rclcpp_components_register_nodes(opencv_cam_node "opencv_cam::OpencvCamNode")
+set(node_plugins "${node_plugins}opencv_cam::OpencvCamNode;$<TARGET_FILE:opencv_cam_node>\n")
 
 #=============
-# Test subscriber component
+# Test subscriber node
 #=============
 
 add_library(
-  subscriber_component SHARED
-  src/subscriber_component.cpp
+  subscriber_node SHARED
+  src/subscriber_node.cpp
 )
 target_compile_definitions(
-  subscriber_component
+  subscriber_node
   PRIVATE "COMPOSITION_BUILDING_DLL"
 )
 ament_target_dependencies(
-  subscriber_component
+  subscriber_node
   class_loader
   rclcpp
   sensor_msgs
 )
-rclcpp_components_register_nodes(subscriber_component "opencv_cam::ImageSubscriberNode")
-set(node_plugins "${node_plugins}opencv_cam::ImageSubscriberNode;$<TARGET_FILE:subscriber_component>\n")
+rclcpp_components_register_nodes(subscriber_node "opencv_cam::ImageSubscriberNode")
+set(node_plugins "${node_plugins}opencv_cam::ImageSubscriberNode;$<TARGET_FILE:subscriber_node>\n")
 
 #=============
 # Export incantations, see https://github.com/ros2/demos/blob/master/composition/CMakeLists.txt
@@ -103,37 +93,37 @@ if (NOT WIN32)
 endif ()
 
 #=============
-# OpenCV camera node, IPC=true
+# OpenCV camera main, IPC=true
 #=============
 
 add_executable(
-  opencv_cam_node
-  src/opencv_cam_node.cpp
+  opencv_cam_main
+  src/opencv_cam_main.cpp
 )
 target_link_libraries(
+  opencv_cam_main
   opencv_cam_node
-  opencv_cam_component
 )
 ament_target_dependencies(
-  opencv_cam_node
+  opencv_cam_main
   rclcpp
 )
 
 #=============
-# Manual composition of camera and subscriber components, IPC=true
+# Manual composition of camera and subscriber nodes, IPC=true
 #=============
 
 add_executable(
-  manual_composition
-  src/manual_composition.cpp
+  ipc_test_main
+  src/ipc_test_main.cpp
 )
 target_link_libraries(
-  manual_composition
-  opencv_cam_component
-  subscriber_component
+  ipc_test_main
+  opencv_cam_node
+  subscriber_node
 )
 ament_target_dependencies(
-  manual_composition
+  ipc_test_main
   rclcpp
 )
 
@@ -141,9 +131,9 @@ ament_target_dependencies(
 # Install
 #=============
 
-# Install components
+# Install nodes
 install(
-  TARGETS opencv_cam_component subscriber_component
+  TARGETS opencv_cam_node subscriber_node
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
@@ -151,7 +141,7 @@ install(
 
 # Install executables
 install(
-  TARGETS opencv_cam_node manual_composition
+  TARGETS opencv_cam_main ipc_test_main
   DESTINATION lib/${PROJECT_NAME}
 )
 
