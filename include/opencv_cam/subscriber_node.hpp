@@ -14,7 +14,7 @@ namespace opencv_cam
 
   public:
 
-    ImageSubscriberNode(const rclcpp::NodeOptions& options);
+    ImageSubscriberNode(const rclcpp::NodeOptions &options);
   };
 
 } // namespace opencv_cam
