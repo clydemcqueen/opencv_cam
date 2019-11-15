@@ -29,7 +29,7 @@ ros2 run opencv_cam opencv_cam_main
 
 A more complex example:
 ~~~
-ros2 run opencv_cam opencv_cam_main /image_raw:=/my_camera/image_raw __params:=opencv_cam_params.yaml
+ros2 run opencv_cam opencv_cam_main --ros-args --remap /image_raw:=/my_camera/image_raw --params-file opencv_cam_params.yaml
 ~~~
 ... where opencv_cam_params.yaml is:
 ~~~
