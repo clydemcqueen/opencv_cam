@@ -1,7 +1,6 @@
 #include "opencv_cam/opencv_cam_node.hpp"
 
 #include <iostream>
-#include <fstream>
 
 #include "camera_calibration_parsers/parse.h"
 
@@ -72,6 +71,7 @@ namespace opencv_cam
       fps_ = 0;
     }
 
+    assert(cxt_.camera_info_path_.size() > 0); // readCalibration will crash if file_name is ""
     std::string camera_name;
     if (camera_calibration_parsers::readCalibration(cxt_.camera_info_path_, camera_name, camera_info_msg_)) {
       RCLCPP_INFO(get_logger(), "got camera info for '%s'", camera_name.c_str());
