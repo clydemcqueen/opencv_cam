@@ -46,6 +46,11 @@ You can test that IPC is working:
 ros2 run opencv_cam ipc_test_main
 ~~~
 
+As of Eloquent, the `composition_launch.py` launch file can also use IPC:
+~~~
+ros2 launch opencv_cam composition_launch.py
+~~~
+
 ## Parameters
 
 | Parameter | Type | Default | Notes |
