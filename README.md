@@ -41,14 +41,26 @@ ros2 run opencv_cam opencv_cam_main --ros-args --remap /image_raw:=/my_camera/im
     camera_frame_id: 'my_camera'
 ~~~
 
-You can test that IPC is working:
+### Intra-process comms
+
+IPC test -- CLI composition:
 ~~~
-ros2 run opencv_cam ipc_test_main
+# First shell
+ros2 run rclcpp_components component_container
+
+# Second shell (ignore the deprecation warning, see https://github.com/ros2/ros2cli/issues/336)
+ros2 component load /ComponentManager opencv_cam opencv_cam::ImageSubscriberNode -e use_intra_process_comms:=true
+ros2 component load /ComponentManager opencv_cam opencv_cam::OpencvCamNode -e use_intra_process_comms:=true
 ~~~
 
-As of Eloquent, the `composition_launch.py` launch file can also use IPC:
+Launch file composition:
 ~~~
 ros2 launch opencv_cam composition_launch.py
+~~~
+
+Manual composition -- handy for debugging:
+~~~
+ros2 run opencv_cam ipc_test_main
 ~~~
 
 ## Parameters

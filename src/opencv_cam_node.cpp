@@ -26,6 +26,8 @@ namespace opencv_cam
   OpencvCamNode::OpencvCamNode(const rclcpp::NodeOptions &options) :
     Node("opencv_cam", options)
   {
+    RCLCPP_INFO(get_logger(), "use_intra_process_comms=%d", options.use_intra_process_comms());
+
     // Get parameters
 #undef CXT_MACRO_MEMBER
 #define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_LOAD_PARAMETER((*this), cxt_, n, t, d)
