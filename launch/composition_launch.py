@@ -2,7 +2,6 @@
 Dynamically compose OpencvCamNode and ImageSubscriberNode in a component_container.
 
 Limitations of this container:
- -- use_intra_process_comms is set to false
  -- stdout is not set to flush after each line, so the most recent log messages may be delayed
 """
 
@@ -29,12 +28,14 @@ def generate_launch_description():
                     'file': True,
                     'filename': movie,
                     'camera_info_path': camera_info_path,
-                }]
+                }],
+                extra_arguments=[{'use_intra_process_comms': True}],
             ),
             ComposableNode(
                 package='opencv_cam',
                 node_plugin='opencv_cam::ImageSubscriberNode',
                 node_name='image_subscriber',
+                extra_arguments=[{'use_intra_process_comms': True}],
             ),
         ],
         output='screen',

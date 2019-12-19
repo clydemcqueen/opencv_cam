@@ -6,6 +6,8 @@ namespace opencv_cam
   ImageSubscriberNode::ImageSubscriberNode(const rclcpp::NodeOptions &options) :
     Node("image_subscriber", options)
   {
+    RCLCPP_INFO(get_logger(), "use_intra_process_comms=%d", options.use_intra_process_comms());
+
     sub_ = this->create_subscription<sensor_msgs::msg::Image>(
       "image_raw", 10,
       [this](sensor_msgs::msg::Image::UniquePtr msg)

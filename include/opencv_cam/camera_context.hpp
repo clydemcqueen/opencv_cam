@@ -14,7 +14,7 @@ namespace opencv_cam
   CXT_MACRO_MEMBER(filename, std::string, "")                     /* Filename, ignored if playback is false */ \
   CXT_MACRO_MEMBER(fps, int, 0)                                   /* Playback fps, ignored if playback is false*/ \
   CXT_MACRO_MEMBER(index, int, 0)                                 /* Device index, see cv::VideoCaptureAPIs */ \
-  CXT_MACRO_MEMBER(camera_info_path, std::string, "")             /* Camera info path */ \
+  CXT_MACRO_MEMBER(camera_info_path, std::string, "info.ini")     /* Camera info path */ \
   CXT_MACRO_MEMBER(camera_frame_id, std::string, "camera_frame")  /* Camera frame id */ \
 /* End of list */
 
