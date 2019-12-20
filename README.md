@@ -68,9 +68,11 @@ ros2 run opencv_cam ipc_test_main
 | Parameter | Type | Default | Notes |
 |---|---|---|---|
 | file | bool | False | Read from file vs. read from device |
+| fps | int | 0 | Framerate. Specify 0 to publish at the recorded (file) or default (device) framerate  |
 | filename | string | "" | Filename, ignored if file is False |
-| fps | int | 0 | Target framerate. Specify 0 to publish at the recorded frame rate. Ignored if file is False |
 | index | int | 0 | Device index, 0 for /dev/video0. Ignored if file is True |
+| width | int | 0 | Device width in pixels. Specify 0 for default. Ignored if file is True |
+| height | int | 0 | Device width in pixels. Specify 0 for default. Ignored if file is True |
 | camera_info_path | string | "info.ini" | Camera info path |
 | camera_frame | string | "camera_frame" | Camera frame id |
 

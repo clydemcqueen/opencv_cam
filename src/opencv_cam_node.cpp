@@ -40,37 +40,55 @@ namespace opencv_cam
 
     RCLCPP_INFO(get_logger(), "OpenCV version %d", CV_VERSION_MAJOR);
 
-    std::string capture_name = cxt_.file_ ? "file" : "device";
-
     // Open file or device
     if (cxt_.file_) {
-      capture_ = std::make_shared<cv::VideoCapture>(cxt_.filename_, cxt_.index_);
-    } else {
-      capture_ = std::make_shared<cv::VideoCapture>(cxt_.index_);
-    }
+      capture_ = std::make_shared<cv::VideoCapture>(cxt_.filename_);
 
-    if (!capture_->isOpened()) {
-      RCLCPP_ERROR(get_logger(), "cannot open %s", capture_name.c_str());
-      return;
-    }
+      if (!capture_->isOpened()) {
+        RCLCPP_ERROR(get_logger(), "cannot open file %s", cxt_.filename_.c_str());
+        return;
+      }
 
-    double width = capture_->get(cv::CAP_PROP_FRAME_WIDTH);
-    double height = capture_->get(cv::CAP_PROP_FRAME_HEIGHT);
-    RCLCPP_INFO(get_logger(), "%s open, width = %g, height = %g", capture_name.c_str(), width, height);
-
-    if (cxt_.file_) {
       if (cxt_.fps_ > 0) {
         // Publish at the specified rate
-        fps_ = cxt_.fps_;
+        publish_fps_ = cxt_.fps_;
       } else {
         // Publish at the recorded rate
-        fps_ = capture_->get(cv::CAP_PROP_FPS);
-        RCLCPP_INFO(get_logger(), "publish at %d fps", fps_);
+        publish_fps_ = capture_->get(cv::CAP_PROP_FPS);
       }
+
+      double width = capture_->get(cv::CAP_PROP_FRAME_WIDTH);
+      double height = capture_->get(cv::CAP_PROP_FRAME_HEIGHT);
+      RCLCPP_INFO(get_logger(), "file %s open, width %g, height %g, publish fps %d",
+        cxt_.filename_.c_str(), width, height, publish_fps_);
+
       next_stamp_ = now();
+
     } else {
-      // Publish at the device rate
-      fps_ = 0;
+      capture_ = std::make_shared<cv::VideoCapture>(cxt_.index_);
+
+      if (!capture_->isOpened()) {
+        RCLCPP_ERROR(get_logger(), "cannot open device %d", cxt_.index_);
+        return;
+      }
+
+      if (cxt_.height_ > 0) {
+        capture_->set(cv::CAP_PROP_FRAME_HEIGHT, cxt_.height_);
+      }
+
+      if (cxt_.width_ > 0) {
+        capture_->set(cv::CAP_PROP_FRAME_WIDTH, cxt_.width_);
+      }
+
+      if (cxt_.fps_ > 0) {
+        capture_->set(cv::CAP_PROP_FPS, cxt_.fps_);
+      }
+
+      double width = capture_->get(cv::CAP_PROP_FRAME_WIDTH);
+      double height = capture_->get(cv::CAP_PROP_FRAME_HEIGHT);
+      double fps = capture_->get(cv::CAP_PROP_FPS);
+      RCLCPP_INFO(get_logger(), "device %d open, width %g, height %g, device fps %g",
+        cxt_.index_, width, height, fps);
     }
 
     assert(cxt_.camera_info_path_.size() > 0); // readCalibration will crash if file_name is ""
@@ -146,8 +164,8 @@ namespace opencv_cam
       camera_info_pub_->publish(camera_info_msg_);
 
       // Sleep if required
-      if (fps_ > 0) {
-        next_stamp_ = next_stamp_ + rclcpp::Duration{1000000000L / fps_};
+      if (cxt_.file_) {
+        next_stamp_ = next_stamp_ + rclcpp::Duration{1000000000L / publish_fps_};
         auto wait = next_stamp_ - stamp;
         if (wait.nanoseconds() > 0) {
           std::this_thread::sleep_for(static_cast<std::chrono::nanoseconds>(wait.nanoseconds()));
