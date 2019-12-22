@@ -9,7 +9,7 @@ namespace opencv_cam
     RCLCPP_INFO(get_logger(), "use_intra_process_comms=%d", options.use_intra_process_comms());
 
     sub_ = this->create_subscription<sensor_msgs::msg::Image>(
-      "image_raw", 10,
+      "image_raw", 1,
       [this](sensor_msgs::msg::Image::UniquePtr msg)
       {
         static bool receiving = false;
@@ -18,6 +18,12 @@ namespace opencv_cam
           receiving = true;
           RCLCPP_INFO(get_logger(), "receiving messages");
         }
+
+#undef SLOW_DOWN
+#ifdef SLOW_DOWN
+        // Overflow the pub and sub buffer
+        std::this_thread::sleep_for (std::chrono::milliseconds(100));
+#endif
 
 #undef SHOW_ADDRESS
 #ifdef SHOW_ADDRESS
