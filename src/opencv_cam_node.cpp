@@ -8,6 +8,91 @@
 namespace opencv_cam
 {
 
+
+#define TEST(s) if (vcp_name == #s) {return cv::s;}
+
+  static int select_video_capture_property(const std::string &vcp_name)
+  {
+    TEST(CAP_PROP_POS_MSEC);
+    TEST(CAP_PROP_POS_FRAMES);
+    TEST(CAP_PROP_POS_AVI_RATIO);
+    TEST(CAP_PROP_FRAME_WIDTH);
+    TEST(CAP_PROP_FRAME_HEIGHT);
+    TEST(CAP_PROP_FPS);
+    TEST(CAP_PROP_FOURCC);
+    TEST(CAP_PROP_FRAME_COUNT);
+    TEST(CAP_PROP_FORMAT);
+    TEST(CAP_PROP_MODE);
+    TEST(CAP_PROP_BRIGHTNESS);
+    TEST(CAP_PROP_CONTRAST);
+    TEST(CAP_PROP_SATURATION);
+    TEST(CAP_PROP_HUE);
+    TEST(CAP_PROP_GAIN);
+    TEST(CAP_PROP_EXPOSURE);
+    TEST(CAP_PROP_CONVERT_RGB);
+    TEST(CAP_PROP_WHITE_BALANCE_BLUE_U);
+    TEST(CAP_PROP_RECTIFICATION);
+    TEST(CAP_PROP_MONOCHROME);
+    TEST(CAP_PROP_SHARPNESS);
+    TEST(CAP_PROP_AUTO_EXPOSURE);
+    TEST(CAP_PROP_GAMMA);
+    TEST(CAP_PROP_TEMPERATURE);
+    TEST(CAP_PROP_TRIGGER);
+    TEST(CAP_PROP_TRIGGER_DELAY);
+    TEST(CAP_PROP_WHITE_BALANCE_RED_V);
+    TEST(CAP_PROP_ZOOM);
+    TEST(CAP_PROP_FOCUS);
+    TEST(CAP_PROP_GUID);
+    TEST(CAP_PROP_ISO_SPEED);
+    TEST(CAP_PROP_BACKLIGHT);
+    TEST(CAP_PROP_PAN);
+    TEST(CAP_PROP_TILT);
+    TEST(CAP_PROP_ROLL);
+    TEST(CAP_PROP_IRIS);
+    TEST(CAP_PROP_SETTINGS);
+    TEST(CAP_PROP_BUFFERSIZE);
+    TEST(CAP_PROP_AUTOFOCUS);
+    TEST(CAP_PROP_SAR_NUM);
+    TEST(CAP_PROP_SAR_DEN);
+    TEST(CAP_PROP_BACKEND);
+    TEST(CAP_PROP_CHANNEL);
+    TEST(CAP_PROP_AUTO_WB);
+    TEST(CAP_PROP_WB_TEMPERATURE);
+    return -1;
+  }
+
+  static void set_video_capture_property(const std::string &vcp_name,
+                                         const double &vcp_value,
+                                         rclcpp::Logger &logger,
+                                         std::shared_ptr<cv::VideoCapture> &capture)
+  {
+    if (!vcp_name.empty()) {
+      auto vcp_id = select_video_capture_property(vcp_name);
+
+      if (vcp_id < 0) {
+        RCLCPP_ERROR(logger, "Video Capture Property unknown: %s", vcp_name.c_str());
+        return;
+      }
+
+      RCLCPP_INFO(logger, "Video Capture Property '%s' set to %f", vcp_name.c_str(), vcp_value);
+      capture->set(vcp_id, vcp_value);
+    }
+  }
+
+  static void set_video_capture_properties(const CameraContext &cxt,
+                                           rclcpp::Logger logger,
+                                           std::shared_ptr<cv::VideoCapture> &capture)
+  {
+    set_video_capture_property(cxt.vcp_property0_, cxt.vcp_value0_, logger, capture);
+    set_video_capture_property(cxt.vcp_property1_, cxt.vcp_value1_, logger, capture);
+    set_video_capture_property(cxt.vcp_property2_, cxt.vcp_value2_, logger, capture);
+    set_video_capture_property(cxt.vcp_property3_, cxt.vcp_value3_, logger, capture);
+    set_video_capture_property(cxt.vcp_property4_, cxt.vcp_value4_, logger, capture);
+    set_video_capture_property(cxt.vcp_property5_, cxt.vcp_value5_, logger, capture);
+    set_video_capture_property(cxt.vcp_property6_, cxt.vcp_value6_, logger, capture);
+    set_video_capture_property(cxt.vcp_property7_, cxt.vcp_value7_, logger, capture);
+  }
+
   std::string mat_type2encoding(int mat_type)
   {
     switch (mat_type) {
@@ -27,31 +112,52 @@ namespace opencv_cam
   OpencvCamNode::OpencvCamNode(const rclcpp::NodeOptions &options) :
     Node("opencv_cam", options)
   {
-    // Get parameters
+    // Initialize parameters
 #undef CXT_MACRO_MEMBER
 #define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_LOAD_PARAMETER((*this), cxt_, n, t, d)
     CXT_MACRO_INIT_PARAMETERS(OPENCV_CAM_ALL_PARAMS, validate_parameters)
 
-    // Register parameters
+    // Register for parameter changed message
 #undef CXT_MACRO_MEMBER
 #define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_PARAMETER_CHANGED(cxt_, n, t)
     CXT_MACRO_REGISTER_PARAMETERS_CHANGED((*this), OPENCV_CAM_ALL_PARAMS, validate_parameters)
 
+    // Display parameters
+#undef CXT_MACRO_MEMBER
+#define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_LOG_SORTED_PARAMETER(cxt_, n, t, d)
+    CXT_MACRO_LOG_SORTED_PARAMETERS(RCLCPP_INFO, get_logger(), "OpenCV Parameters", OPENCV_CAM_ALL_PARAMS)
+
+    // Check that all command line parameters are registered
+#undef CXT_MACRO_MEMBER
+#define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_CHECK_CMDLINE_PARAMETER(n, t, d)
+    CXT_MACRO_CHECK_CMDLINE_PARAMETERS((*this), OPENCV_CAM_ALL_PARAMS)
+
     RCLCPP_INFO(get_logger(), "OpenCV version %d", CV_VERSION_MAJOR);
 
-    std::string capture_name = cxt_.file_ ? "file" : "device";
+    std::string capture_name{};
 
     // Open file or device
     if (cxt_.file_) {
       capture_ = std::make_shared<cv::VideoCapture>(cxt_.filename_, cxt_.index_);
+      capture_name = std::string("Video file:'")
+        .append(cxt_.filename_)
+        .append("' on index:")
+        .append(std::to_string(cxt_.index_));
     } else {
       capture_ = std::make_shared<cv::VideoCapture>(cxt_.index_);
+      capture_name = std::string("Video device on index:")
+        .append(std::to_string(cxt_.index_));
+//
+//      capture_->set(cv::CAP_PROP_FRAME_WIDTH, 2560);
+//      capture_->set(cv::CAP_PROP_FRAME_HEIGHT, 720);
     }
 
     if (!capture_->isOpened()) {
       RCLCPP_ERROR(get_logger(), "cannot open %s", capture_name.c_str());
       return;
     }
+
+    set_video_capture_properties(cxt_, get_logger(), capture_);
 
     double width = capture_->get(cv::CAP_PROP_FRAME_WIDTH);
     double height = capture_->get(cv::CAP_PROP_FRAME_HEIGHT);
@@ -100,11 +206,7 @@ namespace opencv_cam
   }
 
   void OpencvCamNode::validate_parameters()
-  {
-#undef CXT_MACRO_MEMBER
-#define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_LOG_PARAMETER(RCLCPP_INFO, get_logger(), cxt_, n, t, d)
-    OPENCV_CAM_ALL_PARAMS
-  }
+  {}
 
   void OpencvCamNode::loop()
   {
@@ -127,11 +229,21 @@ namespace opencv_cam
       image_msg->header.stamp = stamp;
       image_msg->header.frame_id = cxt_.camera_frame_id_;
       image_msg->height = frame.rows;
-      image_msg->width = frame.cols;
+      image_msg->width = cxt_.half_image_ ? frame.cols / 2 : frame.cols;
       image_msg->encoding = mat_type2encoding(frame.type());
       image_msg->is_bigendian = false;
-      image_msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(frame.step);
-      image_msg->data.assign(frame.datastart, frame.dataend);
+      image_msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(cxt_.half_image_ ? frame.step / 2 : frame.step);
+
+      // Copy the data from the mat to the message
+      if (cxt_.half_image_ == 0) {
+        image_msg->data.assign(frame.datastart, frame.dataend);
+      } else {
+        int bytes_per_row = image_msg->width * frame.channels();
+        for (int row = 0; row < frame.rows; row += 1) {
+          uint8_t *p = frame.ptr<uint8_t>(row) + (cxt_.half_image_ == 1 ? 0 : bytes_per_row);
+          image_msg->data.insert(image_msg->data.end(), p, p + bytes_per_row);
+        }
+      }
 
 #undef SHOW_ADDRESS
 #ifdef SHOW_ADDRESS

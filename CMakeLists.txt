@@ -99,13 +99,19 @@ endif ()
 add_executable(
   opencv_cam_main
   src/opencv_cam_main.cpp
+  src/opencv_cam_node.cpp
 )
 target_link_libraries(
   opencv_cam_main
-  opencv_cam_node
+#  opencv_cam_node
 )
 ament_target_dependencies(
   opencv_cam_main
+  camera_calibration_parsers
+  class_loader
+  OpenCV
+  rclcpp
+  sensor_msgs
   rclcpp
 )
 
