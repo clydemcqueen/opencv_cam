@@ -24,7 +24,8 @@ namespace opencv_cam
   }
 
   OpencvCamNode::OpencvCamNode(const rclcpp::NodeOptions &options) :
-    Node("opencv_cam", options)
+    Node("opencv_cam", options),
+    canceled_(false)
   {
     RCLCPP_INFO(get_logger(), "use_intra_process_comms=%d", options.use_intra_process_comms());
 
@@ -54,7 +55,7 @@ namespace opencv_cam
         publish_fps_ = cxt_.fps_;
       } else {
         // Publish at the recorded rate
-        publish_fps_ = capture_->get(cv::CAP_PROP_FPS);
+        publish_fps_ = static_cast<int>(capture_->get(cv::CAP_PROP_FPS));
       }
 
       double width = capture_->get(cv::CAP_PROP_FRAME_WIDTH);
@@ -91,18 +92,18 @@ namespace opencv_cam
         cxt_.index_, width, height, fps);
     }
 
-    assert(cxt_.camera_info_path_.size() > 0); // readCalibration will crash if file_name is ""
+    assert(!cxt_.camera_info_path_.empty()); // readCalibration will crash if file_name is ""
     std::string camera_name;
     if (camera_calibration_parsers::readCalibration(cxt_.camera_info_path_, camera_name, camera_info_msg_)) {
       RCLCPP_INFO(get_logger(), "got camera info for '%s'", camera_name.c_str());
+      camera_info_msg_.header.frame_id = cxt_.camera_frame_id_;
+      camera_info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("camera_info", 10);
     } else {
-      RCLCPP_ERROR(get_logger(), "cannot get camera info");
+      RCLCPP_ERROR(get_logger(), "cannot get camera info, will not publish");
+      camera_info_pub_ = nullptr;
     }
 
-    camera_info_msg_.header.frame_id = cxt_.camera_frame_id_;
-
-    camera_info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("camera_info", 10);
-    image_pub_ = create_publisher<sensor_msgs::msg::Image>("image_raw", 10);
+    image_pub_ = image_transport::create_publisher(this, "image_raw");
 
     // Run loop on it's own thread
     thread_ = std::thread(std::bind(&OpencvCamNode::loop, this));
@@ -138,7 +139,6 @@ namespace opencv_cam
       }
 
       auto stamp = now();
-      camera_info_msg_.header.stamp = stamp;
 
       // Avoid copying image message if possible
       sensor_msgs::msg::Image::UniquePtr image_msg(new sensor_msgs::msg::Image());
@@ -160,8 +160,11 @@ namespace opencv_cam
 #endif
 
       // Publish
-      image_pub_->publish(std::move(image_msg));
-      camera_info_pub_->publish(camera_info_msg_);
+      image_pub_.publish(std::move(image_msg));
+      if (camera_info_pub_) {
+        camera_info_msg_.header.stamp = stamp;
+        camera_info_pub_->publish(camera_info_msg_);
+      }
 
       // Sleep if required
       if (cxt_.file_) {

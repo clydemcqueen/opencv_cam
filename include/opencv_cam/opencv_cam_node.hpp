@@ -3,8 +3,9 @@
 
 #include "opencv_cam/camera_context.hpp"
 
-#include "rclcpp/rclcpp.hpp"
+#include "image_transport/image_transport.h"
 #include "opencv2/highgui/highgui.hpp"
+#include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/camera_info.hpp"
 #include "sensor_msgs/msg/image.hpp"
 
@@ -24,14 +25,14 @@ namespace opencv_cam
     int publish_fps_;
     rclcpp::Time next_stamp_;
 
-    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_;
+    image_transport::Publisher image_pub_;
     rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_pub_;
 
   public:
 
     explicit OpencvCamNode(const rclcpp::NodeOptions &options);
 
-    ~OpencvCamNode();
+    ~OpencvCamNode() override;
 
   private:
 
