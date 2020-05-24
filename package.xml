@@ -21,7 +21,7 @@
     <depend>class_loader</depend>
     <depend>image_transport</depend>
     <depend>image_transport_plugins</depend>
-    <depend>OpenCV</depend>
+    <depend>libopencv-dev</depend>
     <depend>rclcpp</depend>
     <depend>ros2_shared</depend>
     <depend>sensor_msgs</depend>
