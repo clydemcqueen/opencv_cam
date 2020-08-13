@@ -35,6 +35,7 @@ find_package(sensor_msgs REQUIRED)
 include_directories(
   include
   ${ros2_shared_INCLUDE_DIRS}
+  ${rclcpp_components_INCLUDE_DIRS}
 )
 
 # Create ament index resource which references the libraries in the binary dir
