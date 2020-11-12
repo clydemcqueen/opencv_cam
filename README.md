@@ -4,9 +4,8 @@ A simple [ROS2](https://index.ros.org/doc/ros2/) camera driver based on [OpenCV]
 
 Supports [ROS2 intra-process comms](https://index.ros.org//doc/ros2/Tutorials/Intra-Process-Communication/).
 
-Requires Ubuntu Bionic, OpenCV 3.2, 
-[ROS2 Eloquent](https://index.ros.org/doc/ros2/Installation/Eloquent/) and 
-`ros-eloquent-camera-calibration-parsers`.
+Requires [ROS2 Eloquent or Foxy](https://index.ros.org/doc/ros2/Installation/) and
+`ros-$ROS_DISTRO-camera-calibration-parsers`.
 
 ## Install and build
 
@@ -16,7 +15,7 @@ cd ~/ros2/opencv_cam_ws/src
 git clone https://github.com/clydemcqueen/opencv_cam.git
 git clone https://github.com/ptrmu/ros2_shared.git
 cd ~/ros2/opencv_cam_ws/
-source /opt/ros/eloquent/setup.bash
+source /opt/ros/$ROS_DISTRO/setup.bash
 colcon build
 ~~~
 
@@ -78,5 +77,5 @@ ros2 run opencv_cam ipc_test_main
 
 ## Camera info file formats
 
-Uses the [ROS standard camera calibration formats](http://wiki.ros.org/camera_calibration_parsers?distro=melodic).
+Uses the [ROS standard camera calibration formats](http://wiki.ros.org/camera_calibration_parsers).
 Files must end in `.ini` or `.yaml`.
