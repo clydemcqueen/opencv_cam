@@ -103,7 +103,7 @@ namespace opencv_cam
       camera_info_pub_ = nullptr;
     }
 
-    image_pub_ = image_transport::create_publisher(this, "image_raw");
+    image_pub_ = create_publisher<sensor_msgs::msg::Image>("image_raw", 10);
 
     // Run loop on it's own thread
     thread_ = std::thread(std::bind(&OpencvCamNode::loop, this));
@@ -160,7 +160,7 @@ namespace opencv_cam
 #endif
 
       // Publish
-      image_pub_.publish(std::move(image_msg));
+      image_pub_->publish(std::move(image_msg));
       if (camera_info_pub_) {
         camera_info_msg_.header.stamp = stamp;
         camera_info_pub_->publish(camera_info_msg_);
