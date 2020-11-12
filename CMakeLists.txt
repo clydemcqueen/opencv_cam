@@ -29,8 +29,6 @@ message(STATUS "Found OpenCV version ${OpenCV_VERSION}")
 find_package(ament_cmake REQUIRED)
 find_package(camera_calibration_parsers REQUIRED)
 find_package(class_loader REQUIRED)
-find_package(image_transport REQUIRED)
-find_package(image_transport_plugins REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(ros2_shared REQUIRED)
@@ -61,8 +59,6 @@ ament_target_dependencies(
   opencv_cam_node
   camera_calibration_parsers
   class_loader
-  image_transport
-  image_transport_plugins
   OpenCV
   rclcpp
   sensor_msgs

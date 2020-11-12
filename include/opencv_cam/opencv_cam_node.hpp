@@ -3,7 +3,6 @@
 
 #include "opencv_cam/camera_context.hpp"
 
-#include "image_transport/image_transport.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/camera_info.hpp"
@@ -25,7 +24,7 @@ namespace opencv_cam
     int publish_fps_;
     rclcpp::Time next_stamp_;
 
-    image_transport::Publisher image_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_;
     rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_pub_;
 
   public:
