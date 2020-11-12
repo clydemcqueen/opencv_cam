@@ -13,6 +13,9 @@ endif ()
 # Emulate colcon by providing paths to other projects in the workspace
 if ($ENV{CLION_IDE})
   message(STATUS "Running inside CLion")
+  find_package(fastrtps_cmake_module REQUIRED)
+  set(FastRTPS_INCLUDE_DIR "/opt/ros/foxy/include")
+  set(FastRTPS_LIBRARY_RELEASE "/opt/ros/foxy/lib/libfastrtps.so")
   set(ros2_shared_DIR "${PROJECT_SOURCE_DIR}/../../../install/ros2_shared/share/ros2_shared/cmake")
 endif ()
 
@@ -132,7 +135,7 @@ ament_export_dependencies(class_loader)
 
 ament_export_include_directories(include)
 
-ament_export_interfaces(export_opencv_cam_node export_subscriber_node)
+ament_export_targets(export_opencv_cam_node export_subscriber_node)
 
 ament_export_libraries(gscam_node subscriber_node)
 

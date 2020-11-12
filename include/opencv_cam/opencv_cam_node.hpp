@@ -3,7 +3,7 @@
 
 #include "opencv_cam/camera_context.hpp"
 
-#include "image_transport/image_transport.h"
+#include "image_transport/image_transport.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/camera_info.hpp"

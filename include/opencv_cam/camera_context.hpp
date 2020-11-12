@@ -1,7 +1,7 @@
 #ifndef OPENCV_CAM_CONTEXT_HPP
 #define OPENCV_CAM_CONTEXT_HPP
 
-#include <math.h>
+#include <cmath>
 #include <string>
 
 #include "ros2_shared/context_macros.hpp"

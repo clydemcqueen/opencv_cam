@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "camera_calibration_parsers/parse.h"
+#include "camera_calibration_parsers/parse.hpp"
 
 namespace opencv_cam
 {
