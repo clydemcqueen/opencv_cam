@@ -1,4 +1,4 @@
-git# opencv_cam
+# opencv_cam
 
 A simple [ROS2](https://index.ros.org/doc/ros2/) camera driver based on [OpenCV](https://opencv.org/).
 
