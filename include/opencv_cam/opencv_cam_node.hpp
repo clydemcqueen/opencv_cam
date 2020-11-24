@@ -1,12 +1,12 @@
 #ifndef OPENCV_CAM_HPP
 #define OPENCV_CAM_HPP
 
-#include "opencv_cam/camera_context.hpp"
-
-#include "rclcpp/rclcpp.hpp"
 #include "opencv2/highgui/highgui.hpp"
+#include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/camera_info.hpp"
 #include "sensor_msgs/msg/image.hpp"
+
+#include "opencv_cam/camera_context.hpp"
 
 namespace opencv_cam
 {
@@ -31,7 +31,7 @@ namespace opencv_cam
 
     explicit OpencvCamNode(const rclcpp::NodeOptions &options);
 
-    ~OpencvCamNode();
+    ~OpencvCamNode() override;
 
   private:
 

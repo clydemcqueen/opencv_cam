@@ -13,6 +13,9 @@ endif ()
 # Emulate colcon by providing paths to other projects in the workspace
 if ($ENV{CLION_IDE})
   message(STATUS "Running inside CLion")
+  find_package(fastrtps_cmake_module REQUIRED)
+  set(FastRTPS_INCLUDE_DIR "/opt/ros/foxy/include")
+  set(FastRTPS_LIBRARY_RELEASE "/opt/ros/foxy/lib/libfastrtps.so")
   set(ros2_shared_DIR "${PROJECT_SOURCE_DIR}/../../../install/ros2_shared/share/ros2_shared/cmake")
 endif ()
 
@@ -86,14 +89,6 @@ rclcpp_components_register_nodes(subscriber_node "opencv_cam::ImageSubscriberNod
 set(node_plugins "${node_plugins}opencv_cam::ImageSubscriberNode;$<TARGET_FILE:subscriber_node>\n")
 
 #=============
-# Export incantations, see https://github.com/ros2/demos/blob/master/composition/CMakeLists.txt
-#=============
-
-if (NOT WIN32)
-  ament_environment_hooks("${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}")
-endif ()
-
-#=============
 # OpenCV camera main, IPC=true
 #=============
 
@@ -104,7 +99,6 @@ add_executable(
 )
 target_link_libraries(
   opencv_cam_main
-#  opencv_cam_node
 )
 ament_target_dependencies(
   opencv_cam_main
@@ -135,12 +129,36 @@ ament_target_dependencies(
 )
 
 #=============
+# Export
+# Best practice, see https://discourse.ros.org/t/ament-best-practice-for-sharing-libraries/3602
+#=============
+
+ament_export_dependencies(class_loader)
+
+ament_export_include_directories(include)
+
+ament_export_targets(export_opencv_cam_node export_subscriber_node)
+
+ament_export_libraries(gscam_node subscriber_node)
+
+ament_package()
+
+#=============
 # Install
 #=============
 
 # Install nodes
 install(
-  TARGETS opencv_cam_node subscriber_node
+  TARGETS opencv_cam_node
+  EXPORT export_opencv_cam_node
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+install(
+  TARGETS subscriber_node
+  EXPORT export_subscriber_node
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
@@ -157,5 +175,3 @@ install(
   DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
 )
-
-ament_package()

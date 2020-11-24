@@ -3,7 +3,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "camera_calibration_parsers/parse.h"
+#include "camera_calibration_parsers/parse.hpp"
 
 namespace opencv_cam
 {
@@ -119,8 +119,8 @@ namespace opencv_cam
 
     // Register for parameter changed message
 #undef CXT_MACRO_MEMBER
-#define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_PARAMETER_CHANGED(cxt_, n, t)
-    CXT_MACRO_REGISTER_PARAMETERS_CHANGED((*this), OPENCV_CAM_ALL_PARAMS, validate_parameters)
+#define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_PARAMETER_CHANGED(n, t)
+    CXT_MACRO_REGISTER_PARAMETERS_CHANGED((*this), cxt_, OPENCV_CAM_ALL_PARAMS, validate_parameters)
 
     // Display parameters
 #undef CXT_MACRO_MEMBER
