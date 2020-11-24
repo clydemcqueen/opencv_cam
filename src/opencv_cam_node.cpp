@@ -1,7 +1,6 @@
 #include "opencv_cam/opencv_cam_node.hpp"
 
 #include <iostream>
-#include <fstream>
 
 #include "camera_calibration_parsers/parse.hpp"
 
@@ -110,22 +109,25 @@ namespace opencv_cam
   }
 
   OpencvCamNode::OpencvCamNode(const rclcpp::NodeOptions &options) :
-    Node("opencv_cam", options)
+    Node("opencv_cam", options),
+    canceled_(false)
   {
+    RCLCPP_INFO(get_logger(), "use_intra_process_comms=%d", options.use_intra_process_comms());
+
     // Initialize parameters
 #undef CXT_MACRO_MEMBER
 #define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_LOAD_PARAMETER((*this), cxt_, n, t, d)
     CXT_MACRO_INIT_PARAMETERS(OPENCV_CAM_ALL_PARAMS, validate_parameters)
 
-    // Register for parameter changed message
+    // Register for parameter changed. NOTE at this point nothing is done when parameters change.
 #undef CXT_MACRO_MEMBER
 #define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_PARAMETER_CHANGED(n, t)
     CXT_MACRO_REGISTER_PARAMETERS_CHANGED((*this), cxt_, OPENCV_CAM_ALL_PARAMS, validate_parameters)
 
-    // Display parameters
+    // Log the current parameters
 #undef CXT_MACRO_MEMBER
 #define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_LOG_SORTED_PARAMETER(cxt_, n, t, d)
-    CXT_MACRO_LOG_SORTED_PARAMETERS(RCLCPP_INFO, get_logger(), "OpenCV Parameters", OPENCV_CAM_ALL_PARAMS)
+    CXT_MACRO_LOG_SORTED_PARAMETERS(RCLCPP_INFO, get_logger(), "opencv_cam Parameters", OPENCV_CAM_ALL_PARAMS)
 
     // Check that all command line parameters are registered
 #undef CXT_MACRO_MEMBER
@@ -139,55 +141,77 @@ namespace opencv_cam
     // Open file or device
     if (cxt_.file_) {
       capture_ = std::make_shared<cv::VideoCapture>(cxt_.filename_, cxt_.index_);
-      capture_name = std::string("Video file:'")
+      auto capture_name = std::string("Video file:'")
         .append(cxt_.filename_)
         .append("' on index:")
         .append(std::to_string(cxt_.index_));
-    } else {
-      capture_ = std::make_shared<cv::VideoCapture>(cxt_.index_);
-      capture_name = std::string("Video device on index:")
-        .append(std::to_string(cxt_.index_));
-//
-//      capture_->set(cv::CAP_PROP_FRAME_WIDTH, 2560);
-//      capture_->set(cv::CAP_PROP_FRAME_HEIGHT, 720);
-    }
 
-    if (!capture_->isOpened()) {
-      RCLCPP_ERROR(get_logger(), "cannot open %s", capture_name.c_str());
-      return;
-    }
+      if (!capture_->isOpened()) {
+        RCLCPP_ERROR(get_logger(), "cannot open %s", capture_name.c_str());
+        return;
+      }
 
-    set_video_capture_properties(cxt_, get_logger(), capture_);
+      set_video_capture_properties(cxt_, get_logger(), capture_);
 
-    double width = capture_->get(cv::CAP_PROP_FRAME_WIDTH);
-    double height = capture_->get(cv::CAP_PROP_FRAME_HEIGHT);
-    RCLCPP_INFO(get_logger(), "%s open, width = %g, height = %g", capture_name.c_str(), width, height);
 
-    if (cxt_.file_) {
       if (cxt_.fps_ > 0) {
         // Publish at the specified rate
-        fps_ = cxt_.fps_;
+        publish_fps_ = cxt_.fps_;
       } else {
         // Publish at the recorded rate
-        fps_ = capture_->get(cv::CAP_PROP_FPS);
-        RCLCPP_INFO(get_logger(), "publish at %d fps", fps_);
+        publish_fps_ = static_cast<int>(capture_->get(cv::CAP_PROP_FPS));
       }
+
+      double width = capture_->get(cv::CAP_PROP_FRAME_WIDTH);
+      double height = capture_->get(cv::CAP_PROP_FRAME_HEIGHT);
+      RCLCPP_INFO(get_logger(), "%s open, width %g, height %g, publish fps %d",
+                  capture_name.c_str(), width, height, publish_fps_);
+
       next_stamp_ = now();
+
     } else {
-      // Publish at the device rate
-      fps_ = 0;
+      capture_ = std::make_shared<cv::VideoCapture>(cxt_.index_);
+      auto capture_name = std::string("Video device on index:")
+        .append(std::to_string(cxt_.index_));
+
+      if (!capture_->isOpened()) {
+        RCLCPP_ERROR(get_logger(), "cannot open %s", capture_name.c_str());
+        return;
+      }
+
+      set_video_capture_properties(cxt_, get_logger(), capture_);
+
+
+      if (cxt_.height_ > 0) {
+        capture_->set(cv::CAP_PROP_FRAME_HEIGHT, cxt_.height_);
+      }
+
+      if (cxt_.width_ > 0) {
+        capture_->set(cv::CAP_PROP_FRAME_WIDTH, cxt_.width_);
+      }
+
+      if (cxt_.fps_ > 0) {
+        capture_->set(cv::CAP_PROP_FPS, cxt_.fps_);
+      }
+
+      double width = capture_->get(cv::CAP_PROP_FRAME_WIDTH);
+      double height = capture_->get(cv::CAP_PROP_FRAME_HEIGHT);
+      double fps = capture_->get(cv::CAP_PROP_FPS);
+      RCLCPP_INFO(get_logger(), "%s open, width %g, height %g, device fps %g",
+                  capture_name.c_str(), width, height, fps);
     }
 
+    assert(!cxt_.camera_info_path_.empty()); // readCalibration will crash if file_name is ""
     std::string camera_name;
     if (camera_calibration_parsers::readCalibration(cxt_.camera_info_path_, camera_name, camera_info_msg_)) {
       RCLCPP_INFO(get_logger(), "got camera info for '%s'", camera_name.c_str());
+      camera_info_msg_.header.frame_id = cxt_.camera_frame_id_;
+      camera_info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("camera_info", 10);
     } else {
-      RCLCPP_ERROR(get_logger(), "cannot get camera info");
+      RCLCPP_ERROR(get_logger(), "cannot get camera info, will not publish");
+      camera_info_pub_ = nullptr;
     }
 
-    camera_info_msg_.header.frame_id = cxt_.camera_frame_id_;
-
-    camera_info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("camera_info", 10);
     image_pub_ = create_publisher<sensor_msgs::msg::Image>("image_raw", 10);
 
     // Run loop on it's own thread
@@ -220,7 +244,6 @@ namespace opencv_cam
       }
 
       auto stamp = now();
-      camera_info_msg_.header.stamp = stamp;
 
       // Avoid copying image message if possible
       sensor_msgs::msg::Image::UniquePtr image_msg(new sensor_msgs::msg::Image());
@@ -232,7 +255,8 @@ namespace opencv_cam
       image_msg->width = cxt_.half_image_ ? frame.cols / 2 : frame.cols;
       image_msg->encoding = mat_type2encoding(frame.type());
       image_msg->is_bigendian = false;
-      image_msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(cxt_.half_image_ ? frame.step / 2 : frame.step);
+      image_msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(cxt_.half_image_ ? frame.step / 2
+                                                                                          : frame.step);
 
       // Copy the data from the mat to the message
       if (cxt_.half_image_ == 0) {
@@ -253,11 +277,14 @@ namespace opencv_cam
 
       // Publish
       image_pub_->publish(std::move(image_msg));
-      camera_info_pub_->publish(camera_info_msg_);
+      if (camera_info_pub_) {
+        camera_info_msg_.header.stamp = stamp;
+        camera_info_pub_->publish(camera_info_msg_);
+      }
 
       // Sleep if required
-      if (fps_ > 0) {
-        next_stamp_ = next_stamp_ + rclcpp::Duration{1000000000L / fps_};
+      if (cxt_.file_) {
+        next_stamp_ = next_stamp_ + rclcpp::Duration{1000000000L / publish_fps_};
         auto wait = next_stamp_ - stamp;
         if (wait.nanoseconds() > 0) {
           std::this_thread::sleep_for(static_cast<std::chrono::nanoseconds>(wait.nanoseconds()));

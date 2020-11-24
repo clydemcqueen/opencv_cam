@@ -98,7 +98,7 @@ add_executable(
   src/opencv_cam_node.cpp
 )
 target_link_libraries(
-  opencv_cam_main
+  opencv_cam_node
 )
 ament_target_dependencies(
   opencv_cam_main

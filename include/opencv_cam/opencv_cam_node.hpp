@@ -21,7 +21,7 @@ namespace opencv_cam
     std::shared_ptr<cv::VideoCapture> capture_;
     sensor_msgs::msg::CameraInfo camera_info_msg_;
 
-    int fps_;
+    int publish_fps_;
     rclcpp::Time next_stamp_;
 
     rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_;
