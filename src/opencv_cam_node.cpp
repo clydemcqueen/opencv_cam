@@ -29,15 +29,25 @@ namespace opencv_cam
   {
     RCLCPP_INFO(get_logger(), "use_intra_process_comms=%d", options.use_intra_process_comms());
 
-    // Get parameters
+    // Initialize parameters
 #undef CXT_MACRO_MEMBER
 #define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_LOAD_PARAMETER((*this), cxt_, n, t, d)
     CXT_MACRO_INIT_PARAMETERS(OPENCV_CAM_ALL_PARAMS, validate_parameters)
 
-    // Register parameters
+    // Register for parameter changed. NOTE at this point nothing is done when parameters change.
 #undef CXT_MACRO_MEMBER
-#define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_PARAMETER_CHANGED(cxt_, n, t)
-    CXT_MACRO_REGISTER_PARAMETERS_CHANGED((*this), OPENCV_CAM_ALL_PARAMS, validate_parameters)
+#define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_PARAMETER_CHANGED(n, t)
+    CXT_MACRO_REGISTER_PARAMETERS_CHANGED((*this), cxt_, OPENCV_CAM_ALL_PARAMS, validate_parameters)
+
+    // Log the current parameters
+#undef CXT_MACRO_MEMBER
+#define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_LOG_SORTED_PARAMETER(cxt_, n, t, d)
+    CXT_MACRO_LOG_SORTED_PARAMETERS(RCLCPP_INFO, get_logger(), "opencv_cam Parameters", OPENCV_CAM_ALL_PARAMS)
+
+    // Check that all command line parameters are registered
+#undef CXT_MACRO_MEMBER
+#define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_CHECK_CMDLINE_PARAMETER(n, t, d)
+    CXT_MACRO_CHECK_CMDLINE_PARAMETERS((*this), OPENCV_CAM_ALL_PARAMS)
 
     RCLCPP_INFO(get_logger(), "OpenCV version %d", CV_VERSION_MAJOR);
 
@@ -61,7 +71,7 @@ namespace opencv_cam
       double width = capture_->get(cv::CAP_PROP_FRAME_WIDTH);
       double height = capture_->get(cv::CAP_PROP_FRAME_HEIGHT);
       RCLCPP_INFO(get_logger(), "file %s open, width %g, height %g, publish fps %d",
-        cxt_.filename_.c_str(), width, height, publish_fps_);
+                  cxt_.filename_.c_str(), width, height, publish_fps_);
 
       next_stamp_ = now();
 
@@ -89,7 +99,7 @@ namespace opencv_cam
       double height = capture_->get(cv::CAP_PROP_FRAME_HEIGHT);
       double fps = capture_->get(cv::CAP_PROP_FPS);
       RCLCPP_INFO(get_logger(), "device %d open, width %g, height %g, device fps %g",
-        cxt_.index_, width, height, fps);
+                  cxt_.index_, width, height, fps);
     }
 
     assert(!cxt_.camera_info_path_.empty()); // readCalibration will crash if file_name is ""
@@ -121,11 +131,7 @@ namespace opencv_cam
   }
 
   void OpencvCamNode::validate_parameters()
-  {
-#undef CXT_MACRO_MEMBER
-#define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_LOG_PARAMETER(RCLCPP_INFO, get_logger(), cxt_, n, t, d)
-    OPENCV_CAM_ALL_PARAMS
-  }
+  {}
 
   void OpencvCamNode::loop()
   {

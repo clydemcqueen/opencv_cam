@@ -23,12 +23,12 @@ namespace opencv_cam
   CXT_MACRO_MEMBER(camera_frame_id, std::string, "camera_frame")  /* Camera frame id */ \
 /* End of list */
 
-#undef CXT_MACRO_MEMBER
-#define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_DEFINE_MEMBER(n, t, d)
 
   struct CameraContext
   {
-    OPENCV_CAM_ALL_PARAMS
+#undef CXT_MACRO_MEMBER
+#define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_DEFINE_MEMBER(n, t, d)
+    CXT_MACRO_DEFINE_MEMBERS(OPENCV_CAM_ALL_PARAMS)
   };
 
 } // namespace opencv_cam
