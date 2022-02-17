@@ -1,0 +1,10 @@
+repositories:
+  opencv_cam:
+    type: git
+    url: https://github.com/clydemcqueen/opencv_cam
+    version: master
+  ros2_shared:
+    type: git
+    url: https://github.com/ptrmu/ros2_shared
+    version: master
+
