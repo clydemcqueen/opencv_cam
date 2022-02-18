@@ -174,7 +174,8 @@ namespace opencv_cam
 
       // Sleep if required
       if (cxt_.file_) {
-        next_stamp_ = next_stamp_ + rclcpp::Duration{1000000000L / publish_fps_};
+        using namespace std::chrono_literals;
+        next_stamp_ = next_stamp_ + rclcpp::Duration{1000000000ns / publish_fps_};
         auto wait = next_stamp_ - stamp;
         if (wait.nanoseconds() > 0) {
           std::this_thread::sleep_for(static_cast<std::chrono::nanoseconds>(wait.nanoseconds()));
