@@ -19,18 +19,14 @@ RUN apt-get install wget
 
 WORKDIR /work/opencv_cam_ws
 
-RUN mkdir src
+ARG ROS2_SHARED_BRANCH=master
+RUN git clone https://github.com/ptrmu/ros2_shared.git -b $ROS2_SHARED_BRANCH
 
-ARG OPENCV_CAM_BRANCH=master
+# Changes to opencv_cam will cause a re-build
+COPY . src/opencv_cam/
 
-# Get the workspace
-RUN wget https://raw.githubusercontent.com/clydemcqueen/opencv_cam/${OPENCV_CAM_BRANCH}/workspace.repos \
-    && vcs import src < workspace.repos
-
-# Get dependencies
 RUN rosdep install -y --from-paths . --ignore-src
 
-# Build
 RUN /bin/bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && colcon build"
 
 # Requires a webcam on /dev/video0:
