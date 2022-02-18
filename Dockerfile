@@ -11,6 +11,8 @@ ARG ROS_DISTRO=foxy
 
 FROM osrf/ros:${ROS_DISTRO}-desktop
 
+ARG ROS_DISTRO
+
 RUN apt-get update && apt-get upgrade -y
 
 RUN apt-get install wget
