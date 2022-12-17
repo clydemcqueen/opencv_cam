@@ -63,6 +63,7 @@ ament_target_dependencies(
   rclcpp
   rclcpp_components
   sensor_msgs
+  ros2_shared
 )
 rclcpp_components_register_nodes(opencv_cam_node "opencv_cam::OpencvCamNode")
 set(node_plugins "${node_plugins}opencv_cam::OpencvCamNode;$<TARGET_FILE:opencv_cam_node>\n")
