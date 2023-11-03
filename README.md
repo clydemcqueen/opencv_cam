@@ -4,8 +4,9 @@ A simple [ROS2](https://index.ros.org/doc/ros2/) camera driver based on [OpenCV]
 
 Supports [ROS2 intra-process comms](https://index.ros.org//doc/ros2/Tutorials/Intra-Process-Communication/).
 
-Requires [ROS2 Foxy or Galactic](https://index.ros.org/doc/ros2/Installation/) and
+Requires [ROS2](https://index.ros.org/doc/ros2/Installation/) and
 `ros-$ROS_DISTRO-camera-calibration-parsers`.
+Builds for ROS2 Foxy, Galactic, Humble and Iron.
 
 ## Install and build
 

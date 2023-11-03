@@ -17,15 +17,17 @@ jobs:
         ros_distribution:
           - foxy
           - galactic
+          - humble
+          - iron
         include:
-          # Foxy Fitzroy (June 2020 - May 2023)
           - docker_image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-latest
             ros_distribution: foxy
-            ros_version: 2
-          # Galactic Geochelone (May 2021 - November 2022)
           - docker_image: rostooling/setup-ros-docker:ubuntu-focal-ros-galactic-ros-base-latest
             ros_distribution: galactic
-            ros_version: 2
+          - ros_distribution: humble
+            docker_image: rostooling/setup-ros-docker:ubuntu-jammy-ros-humble-ros-base-latest
+          - ros_distribution: iron
+            docker_image: rostooling/setup-ros-docker:ubuntu-jammy-ros-iron-ros-base-latest
     container:
       image: ${{ matrix.docker_image }}
     steps:
